@@ -121,42 +121,30 @@ if uploaded_file:
             st.success("No artifacts found. This image is AUTHENTIC.")
             
     os.remove("temp.jpg")
-import streamlit as st
+    import streamlit as st
 from PIL import Image, ImageChops, ImageEnhance
 import os
 import time
 
-# --- PAGE CONFIG ---
-st.set_page_config(page_title="TruthCircle AI", page_icon="🛡️", layout="centered")
+# --- UI CONFIG ---
+st.set_page_config(page_title="GOKUL Lab | Forensic Suite", page_icon="🛡️", layout="wide")
 
-# --- NEON GLOW CSS ---
+# --- STYLISH CSS ---
 st.markdown("""
 <style>
-.stApp {
-    background: #0e1117;
-}
-.glow-text {
-    font-size: 50px;
-    color: #fff;
-    text-align: center;
-    text-shadow: 0 0 10px #00d4ff, 0 0 20px #00d4ff, 0 0 40px #00d4ff;
-    font-weight: bold;
-    padding: 20px;
-    margin: 0;
-}
-div.stButton > button {
-    background: linear-gradient(45deg, #00d4ff, #0022ff);
-    color: white;
-    border: none;
-    padding: 15px 32px;
-    font-size: 20px;
-    border-radius: 50px;
-    box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
-}
-div.stButton > button:hover {
-    box-shadow: 0 0 40px #00d4ff;
-    transform: scale(1.02);
-}
+    .stApp { background: #010409; }
+    .gokul-header {
+        font-size: 50px; font-weight: 900; text-align: center;
+        background: linear-gradient(to right, #ff0000, #fffb00, #00ffd5, #002bff, #ff00c8);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-size: 400%; animation: rainbow 5s linear infinite;
+        letter-spacing: 5px;
+    }
+    @keyframes rainbow { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
+    
+    .real-result { font-size: 70px; color: #28a745; text-align: center; font-weight: bold; text-shadow: 0 0 20px #28a745; animation: zoomIn 0.5s; }
+    .fake-result { font-size: 70px; color: #ff4b4b; text-align: center; font-weight: bold; text-shadow: 0 0 20px #ff4b4b; animation: zoomIn 0.5s; }
+    @keyframes zoomIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 </style>
 """, unsafe_allow_html=True)
 
@@ -165,18 +153,29 @@ def perform_ela(img_path, quality=90):
     resaved_path = "resaved.jpg"
     original.save(resaved_path, 'JPEG', quality=quality)
     resaved = Image.open(resaved_path)
+    
+    # Calculate difference
     ela_img = ImageChops.difference(original, resaved)
     extrema = ela_img.getextrema()
+    
+    # Logic update: Intensity check
     max_diff = max([ex[1] for ex in extrema]) or 1
+    
+    # Sensitivity factor: Lower number = More strict
     scale = 255.0 / max_diff
-    ela_img = ImageEnhance.Brightness(ela_img).enhance(scale)
-    return ela_img
+    ela_display = ImageEnhance.Brightness(ela_img).enhance(scale)
+    
+    return ela_display, max_diff
 
-# --- UI START ---
-st.markdown('<p class="glow-text">TRUTH CIRCLE AI</p>', unsafe_allow_html=True)
-st.write("<h3 style='text-align: center; color: #00d4ff;'>🛡️ Next-Gen Forensic Scanner</h3>", unsafe_allow_html=True)
+# --- SIDEBAR ---
+with st.sidebar:
+    st.markdown('<p class="gokul-header">GOKUL</p>', unsafe_allow_html=True)
+    st.write("---")
+    st.info("LAB STATUS: ACTIVE")
 
-uploaded_file = st.file_uploader("Drop your image to expose the truth...", type=["jpg", "jpeg", "png"])
+# --- MAIN ---
+st.markdown("<h1 style='text-align: center; color: white;'>TRUTH CIRCLE AI</h1>", unsafe_allow_html=True)
+uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
     with open("temp.jpg", "wb") as f:
@@ -184,25 +183,25 @@ if uploaded_file:
     
     col1, col2 = st.columns(2)
     with col1:
-        st.write("#### 📸 Input Image")
-        st.image(uploaded_file, use_container_width=True)
+        st.image(uploaded_file, caption="Original", use_container_width=True)
     
-    if st.button("🚀 INITIATE NEURAL SCAN"):
-        progress_bar = st.progress(0)
-        for i in range(101):
-            time.sleep(0.01)
-            progress_bar.progress(i)
-        
-        ela_res = perform_ela("temp.jpg")
+    if st.button("🚀 EXECUTE NEURAL SCAN"):
+        with st.spinner("Analyzing Pixels..."):
+            time.sleep(1)
+            ela_res, score = perform_ela("temp.jpg")
+            
         with col2:
-            st.write("#### 🧬 Forensic Heatmap")
-            st.image(ela_res, use_container_width=True)
+            st.image(ela_res, caption="Forensic Heatmap", use_container_width=True)
+            
+        st.write("---")
         
-        st.markdown("---")
-        extrema = ela_res.convert("L").getextrema()
-        if extrema[1] > 55:
-            st.error("⚠️ CRITICAL ALERT: Digital Manipulation Detected!")
+        # --- NEW STRICT LOGIC ---
+        # 30-40 is usually original, > 50 is edited
+        if score > 45: 
+            st.markdown('<div class="fake-result">🚨 FAKE</div>', unsafe_allow_html=True)
+            st.warning("Forensic Alert: Artificial pixel patterns detected!")
         else:
-            st.success("✅ SCAN CLEAR: Image appears to be Authentic.")
-    
-    if os.path.exists("temp.jpg"): os.remove("temp.jpg")
+            st.markdown('<div class="real-result">✅ REAL</div>', unsafe_allow_html=True)
+            st.success("Analysis Clear: No significant artifacts found.")
+
+    os.remove("temp.jpg")

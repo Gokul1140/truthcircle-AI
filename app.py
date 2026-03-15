@@ -17,11 +17,11 @@ st.markdown("""
     /* Sidebar Styling */
     [data-testid="stSidebar"] {
         background-color: #0d1117;
-        border-right: 1px solid #30363d;
+        border-right: 1px solid #30363g;
         padding-top: 0 !important; /* Move content up */
     }
 
-    /* GOKUL Name Glow & Pulse Animation */
+    /* GOKUL Name Glow & round Animation */
     .gokul-glow {
         font-family: 'Montserrat', sans-serif;
         font-size: 30px;
